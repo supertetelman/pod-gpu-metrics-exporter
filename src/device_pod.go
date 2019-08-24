@@ -43,7 +43,6 @@ func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) map
 					}
 					for _, uuid := range device.GetDeviceIds() {
 						// TODO: use other type to store DevicetoPod information
-						fmt.Println("Insert: uuid "+ uuid + " with true uuid " + toTrueDeviceId(uuid))
 						deviceToPodMap[toTrueDeviceId(uuid)] = podInfo
 					}
 				}
@@ -95,7 +94,6 @@ func addPodInfoToMetrics(dir string, srcFile string, destFile string, deviceToPo
 		if string(line[0]) != "#" {
 			uuid := strings.Split(strings.Split(line, ",")[1], "\"")[1]
 			if pod, exists := deviceToPodMap[uuid]; exists {
-				fmt.Println("Query: uuid " + uuid + "with pod name " + pod.name)
 				splitLine := strings.Split(line, "}")
 				line = fmt.Sprintf("%s,pod_name=\"%s\",pod_namespace=\"%s\",container_name=\"%s\"}%s", splitLine[0], pod.name, pod.namespace, pod.container, splitLine[1])
 			}
