@@ -94,8 +94,8 @@ func addPodInfoToMetrics(dir string, srcFile string, destFile string, deviceToPo
 		// Skip comments and add pod info
 		if string(line[0]) != "#" {
 			uuid := strings.Split(strings.Split(line, ",")[1], "\"")[1]
-			fmt.Println("Query: uuid ", uuid)
 			if pod, exists := deviceToPodMap[uuid]; exists {
+				fmt.Println("Query: uuid " + uuid + "with pod name " + pod.name)
 				splitLine := strings.Split(line, "}")
 				line = fmt.Sprintf("%s,pod_name=\"%s\",pod_namespace=\"%s\",container_name=\"%s\"}%s", splitLine[0], pod.name, pod.namespace, pod.container, splitLine[1])
 			}
