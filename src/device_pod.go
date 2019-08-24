@@ -21,6 +21,13 @@ type devicePodInfo struct {
 	container string
 }
 
+func toTrueDeviceId(vid string) string {
+	if vid[len(vid)-2:len(vid)-1] == "-" {
+		return vid[:len(vid)-2]
+	}
+	return vid
+}
+
 // Helper function that creates a map of pod info for each device
 func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) map[string]devicePodInfo {
 	deviceToPodMap := make(map[string]devicePodInfo)
@@ -35,8 +42,8 @@ func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) map
 						container: container.GetName(),
 					}
 					for _, uuid := range device.GetDeviceIds() {
-						fmt.Println("add device id & pod into map: " + uuid + podInfo.name)
-						deviceToPodMap[uuid] = podInfo
+						// TODO: use other type to store DevicetoPod information
+						deviceToPodMap[toTrueDeviceId(uuid)] = podInfo
 					}
 				}
 			}
