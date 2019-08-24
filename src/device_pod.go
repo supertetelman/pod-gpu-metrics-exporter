@@ -35,6 +35,7 @@ func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) map
 						container: container.GetName(),
 					}
 					for _, uuid := range device.GetDeviceIds() {
+						fmt.Println("add device id & pod into map: " + uuid + podInfo.name)
 						deviceToPodMap[uuid] = podInfo
 					}
 				}
@@ -70,7 +71,7 @@ func addPodInfoToMetrics(dir string, srcFile string, destFile string, deviceToPo
 	tmpFname := tmpF.Name()
 	defer func() {
 		tmpF.Close()
-		os.Remove(tmpFname)
+		//os.Remove(tmpFname)
 	}()
 
 	for {
