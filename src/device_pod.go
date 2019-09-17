@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/jwangsadinata/go-multimap/setmultimap"
 	"io"
 	"io/ioutil"
 	"os"
@@ -29,8 +30,9 @@ func toTrueDeviceId(vid string) string {
 }
 
 // Helper function that creates a map of pod info for each device
-func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) map[string]devicePodInfo {
-	deviceToPodMap := make(map[string]devicePodInfo)
+func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) *setmultimap.MultiMap {
+	//deviceToPodMap := make(map[string]devicePodInfo)
+	deviceToPodsMap := setmultimap.New()
 
 	for _, pod := range devicePods.GetPodResources() {
 		for _, container := range pod.GetContainers() {
@@ -43,16 +45,17 @@ func createDevicePodMap(devicePods podresourcesapi.ListPodResourcesResponse) map
 					}
 					for _, uuid := range device.GetDeviceIds() {
 						// TODO: use other type to store DevicetoPod information
-						deviceToPodMap[toTrueDeviceId(uuid)] = podInfo
+						//deviceToPodMap[toTrueDeviceId(uuid)] = podInfo
+						deviceToPodsMap.Put(toTrueDeviceId(uuid), podInfo)
 					}
 				}
 			}
 		}
 	}
-	return deviceToPodMap
+	return deviceToPodsMap
 }
 
-func getDevicePodInfo(socket string) (map[string]devicePodInfo, error) {
+func getDevicePodInfo(socket string) (*setmultimap.MultiMap, error) {
 	devicePods, err := getListOfPods(socket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get devices Pod information: %v", err)
@@ -61,7 +64,7 @@ func getDevicePodInfo(socket string) (map[string]devicePodInfo, error) {
 
 }
 
-func addPodInfoToMetrics(dir string, srcFile string, destFile string, deviceToPodMap map[string]devicePodInfo) error {
+func addPodInfoToMetrics(dir string, srcFile string, destFile string, deviceToPodsMap *setmultimap.MultiMap) error {
 	readFI, err := os.Open(srcFile)
 	if err != nil {
 		return fmt.Errorf("failed to open %s: %v", srcFile, err)
@@ -92,10 +95,25 @@ func addPodInfoToMetrics(dir string, srcFile string, destFile string, deviceToPo
 
 		// Skip comments and add pod info
 		if string(line[0]) != "#" {
+
 			uuid := strings.Split(strings.Split(line, ",")[1], "\"")[1]
+			/*
 			if pod, exists := deviceToPodMap[uuid]; exists {
 				splitLine := strings.Split(line, "}")
 				line = fmt.Sprintf("%s,pod_name=\"%s\",pod_namespace=\"%s\",container_name=\"%s\"}%s", splitLine[0], pod.name, pod.namespace, pod.container, splitLine[1])
+			}
+
+			 */
+
+			if deviceToPodsMap.ContainsKey(uuid) {
+				splitLine := strings.Split(line, "}")
+				pods, _ := deviceToPodsMap.Get(uuid)
+				var podsInfo string
+				for _, s := range pods {
+					pod := s.(devicePodInfo)
+					podsInfo = fmt.Sprintf("%s,pod_name=\"%s\",pod_namespace=\"%s\",container_name=\"%s\"}", podsInfo, pod.name, pod.namespace, pod.container)
+				}
+				line = fmt.Sprintf("%s%s%s", splitLine[0], podsInfo, splitLine[1])
 			}
 		}
 

@@ -38,12 +38,12 @@ func watchAndWriteGPUmetrics() {
 		case event := <-watcher.Events:
 			if event.Name == gpuMetrics && event.Op&fsnotify.Create == fsnotify.Create {
 				glog.V(1).Infof("inotify: %s created, now adding device pod information.", gpuMetrics)
-				podMap, err := getDevicePodInfo(socketPath)
+				podMaps, err := getDevicePodInfo(socketPath)
 				if err != nil {
 					glog.Error(err)
 					return
 				}
-				err = addPodInfoToMetrics(gpuPodMetricsPath, gpuMetrics, gpuPodMetrics, podMap)
+				err = addPodInfoToMetrics(gpuPodMetricsPath, gpuMetrics, gpuPodMetrics, podMaps)
 				if err != nil {
 					glog.Error(err)
 					return
